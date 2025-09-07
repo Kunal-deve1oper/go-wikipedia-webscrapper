@@ -27,7 +27,12 @@ func sendReq(url string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	var allDetails []Details
 	var allLinks []Link
-	res, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+	req.Header.Set("User-Agent", "random")
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -80,11 +85,20 @@ func saveJson(allDetails []Details, allLinks []Link) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	contentFile, err := os.Create(fmt.Sprintf("%s.json", allDetails[0].Heading))
+	timestamp := time.Now().Format("2006-01-02_15-04-05")
+
+	heading := strings.ReplaceAll(allDetails[0].Heading, " ", "_")
+	if len(heading) > 20 {
+		heading = heading[:20]
+	}
+
+	contentFileName := fmt.Sprintf("%s_%s.json", heading, timestamp)
+	linkFileName := fmt.Sprintf("%s_links_%s.json", heading, timestamp)
+	contentFile, err := os.Create(contentFileName)
 	if err != nil {
 		log.Fatal(err)
 	}
-	linkFile, err := os.Create(fmt.Sprintf("%s_link.json", allDetails[0].Heading))
+	linkFile, err := os.Create(linkFileName)
 	if err != nil {
 		log.Fatal(err)
 	}
